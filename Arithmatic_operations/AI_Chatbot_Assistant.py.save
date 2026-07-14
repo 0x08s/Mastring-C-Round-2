@@ -1,0 +1,66 @@
+import streamlit as st
+from pypdf import PdfReader
+from openai import OpenAI
+import os
+from dotenv import load_dotenv
+
+# Load API Key
+load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
+
+if not api_key:
+    st.error("API Key not found! Please check your .env file.")
+    st.stop()
+
+
+
+st.set_page_config(page_title="Premium AI Chatbot", layout="wide")
+
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+if "pdf_context" not in st.session_state:
+    st.session_state.pdf_context = ""
+
+st.title("🚀 Premium AI Chatbot (Freelance Ready)")
+
+# Sidebar
+mode = st.sidebar.selectbox("Mode", ["Chat", "PDF Assistant"])
+
+# PDF Processing
+if mode == "PDF Assistant":
+    uploaded_files = st.file_uploader("Upload PDFs", type="pdf", accept_multiple_files=True)
+    if uploaded_files:
+        text = ""
+        for file in uploaded_files:
+            reader = PdfReader(file)
+            for page in reader.pages:
+                text += page.extract_text() or ""
+        st.session_state.pdf_context = text
+        st.success("PDF Loaded Successfully!")
+
+# Chat Input
+user_input = st.text_input("Ask anything:")
+
+if user_input:
+    context = st.session_state.pdf_context
+    messages = [{"role": "system", "content": "You are a helpful AI assistant."}]
+    
+    for chat in st.session_state.chat_history:
+        messages.append(chat)
+
+    messages.append({"role": "user", "content": f"Context: {context}\n\nQuestion: {user_input}"})
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=messages
+    )
+
+    answer = response.choices[0].message.content
+    st.session_state.chat_history.append({"role": "user", "content": user_input})
+    st.session_state.chat_history.append({"role": "assistant", "content": answer})
+    st.rerun()
+
+# Display
+for msg in st.session_state.chat_history:
+    role = " You" if msg["role"] == "user" else " AI"
+    st.markdown(f"**{role}:** {msg['content']}")
