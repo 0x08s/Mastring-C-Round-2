@@ -1,0 +1,12 @@
+# Compiled binaries
+*.out
+*.exe
+
+# Temp/cache files
+tempCodeRunnerFile.*
+__pycache__/
+*.pyc
+*.save
+
+# VSCode settings
+.vscode/
